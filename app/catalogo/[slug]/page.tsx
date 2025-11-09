@@ -1,40 +1,53 @@
-// app/catalogo/[slug]/page.tsx
-import { createClient } from '@supabase/supabase-js';
-import VehicleDetailClient from './VehicleDetailClient';
-import type { Vehicle } from '../../../lib/fetchVehicles';
+import { createClient } from '@supabase/supabase-js'
+import VehicleDetailClient from './VehicleDetailClient'
 
 type PageProps = {
-  params: { slug: string };
-};
+  params: { slug: string }
+}
 
-export default async function VehicleDetailPage({ params }: PageProps) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// ⚠️ IMPORTANTE: usamos el ANON KEY para leer (no el service role)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-  const supabase = createClient(supabaseUrl, anonKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+export default async function Page({ params }: PageProps) {
+  // Traemos TODAS las columnas de la fila
   const { data, error } = await supabase
     .from('vehicles')
     .select('*')
     .eq('slug', params.slug)
-    .maybeSingle();
+    .maybeSingle()
 
   if (error) {
-    console.error('Error cargando vehículo:', error);
+    console.error('Error cargando vehículo:', error)
+    // Podés mandar a not-found o mostrar algo simple
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Error cargando el vehículo
+      </div>
+    )
   }
 
   if (!data) {
     return (
-      <main className="min-h-screen bg-[#05030a] text-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <p className="mb-4">Vehículo no encontrado.</p>
-          <a href="/catalogo" className="text-fuchsia-400 hover:underline">
-            ← Volver al catálogo
-          </a>
-        </div>
-      </main>
-    );
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Vehículo no encontrado
+      </div>
+    )
   }
 
-  return <VehicleDetailClient vehicle={data as Vehicle} />;
+  // Debug fuerte del lado del server (se ve en la consola de Node)
+  console.log('Vehicle desde Supabase (server):', data)
+
+  return (
+    <>
+      {/* Debug opcional en la UI para ver exactamente lo que llega */}
+      {/* <pre className="text-xs text-white bg-black p-2 overflow-auto">
+        {JSON.stringify(data, null, 2)}
+      </pre> */}
+
+      <VehicleDetailClient vehicle={data} />
+    </>
+  )
 }

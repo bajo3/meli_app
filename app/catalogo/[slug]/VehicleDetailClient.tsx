@@ -19,6 +19,7 @@ export default function VehicleDetailClient({ vehicle }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const mainPicture = pictures[activeIndex] ?? pictures[0] ?? null;
+  console.log('Vehicle desde Supabase:', vehicle)
 
   // 👀 Debug fuerte
   console.log('Vehicle desde Supabase:', vehicle);
@@ -40,8 +41,8 @@ export default function VehicleDetailClient({ vehicle }: Props) {
     typeof rawKm === 'number'
       ? rawKm
       : rawKm
-      ? Number(String(rawKm).replace(/\D/g, ''))
-      : null;
+        ? Number(String(rawKm).replace(/\D/g, ''))
+        : null;
 
   const motor: string | null = vehicle.Motor ?? vehicle.motor ?? null;
 
@@ -65,8 +66,8 @@ export default function VehicleDetailClient({ vehicle }: Props) {
     typeof rawPuertas === 'number'
       ? rawPuertas
       : rawPuertas
-      ? Number(String(rawPuertas).replace(/\D/g, ''))
-      : null;
+        ? Number(String(rawPuertas).replace(/\D/g, ''))
+        : null;
 
   return (
     <main className="min-h-screen bg-[#05030a] text-slate-100 px-4 py-8 md:py-10">
@@ -137,11 +138,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                       type="button"
                       whileHover={{ scale: 1.03 }}
                       onClick={() => setActiveIndex(idx)}
-                      className={`relative flex-shrink-0 h-16 w-24 sm:h-20 sm:w-28 overflow-hidden rounded-lg border bg-black ${
-                        isActive
+                      className={`relative flex-shrink-0 h-16 w-24 sm:h-20 sm:w-28 overflow-hidden rounded-lg border bg-black ${isActive
                           ? 'border-fuchsia-400 ring-2 ring-fuchsia-500'
                           : 'border-fuchsia-700/40'
-                      }`}
+                        }`}
                     >
                       <Image
                         src={pic}
