@@ -19,11 +19,9 @@ export default function VehicleDetailClient({ vehicle }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const mainPicture = pictures[activeIndex] ?? pictures[0] ?? null;
-  console.log('Vehicle desde Supabase:', vehicle)
 
-  // 👀 Debug fuerte
+  // Debug opcional
   console.log('Vehicle desde Supabase:', vehicle);
-  console.log('Keys vehicle:', Object.keys(vehicle));
 
   // Cerrar modal con ESC
   useEffect(() => {
@@ -81,10 +79,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
           <span>{vehicle.title}</span>
         </nav>
 
-        {/* Layout 2 columnas */}
-        <div className="grid gap-8 items-start lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)]">
+        {/* Layout responsive: columna en mobile, dos columnas en desktop */}
+        <div className="flex flex-col items-start gap-8 lg:flex-row">
           {/* ================= IZQUIERDA: GALERÍA ================= */}
-          <section className="space-y-4">
+          <section className="w-full space-y-4 lg:w-1/2">
             <div className="flex justify-center">
               {/* CONTENEDOR FIJO */}
               <div className="relative w-full max-w-[560px] aspect-[4/3] overflow-hidden rounded-xl border border-fuchsia-600/60 bg-black">
@@ -138,10 +136,11 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                       type="button"
                       whileHover={{ scale: 1.03 }}
                       onClick={() => setActiveIndex(idx)}
-                      className={`relative flex-shrink-0 h-16 w-24 sm:h-20 sm:w-28 overflow-hidden rounded-lg border bg-black ${isActive
+                      className={`relative flex-shrink-0 h-16 w-24 sm:h-20 sm:w-28 overflow-hidden rounded-lg border bg-black ${
+                        isActive
                           ? 'border-fuchsia-400 ring-2 ring-fuchsia-500'
                           : 'border-fuchsia-700/40'
-                        }`}
+                      }`}
                     >
                       <Image
                         src={pic}
@@ -171,7 +170,7 @@ export default function VehicleDetailClient({ vehicle }: Props) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="flex flex-col gap-4 rounded-2xl border border-fuchsia-700/50 bg-gradient-to-b from-[#111118] to-[#2b0b3a] p-6 shadow-lg shadow-black/50"
+            className="w-full rounded-2xl border border-fuchsia-700/50 bg-gradient-to-b from-[#111118] to-[#2b0b3a] p-6 shadow-lg shadow-black/50 lg:w-1/2 flex flex-col gap-4"
           >
             <div>
               <h1 className="text-2xl font-bold text-white">{vehicle.title}</h1>
