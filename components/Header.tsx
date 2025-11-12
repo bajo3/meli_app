@@ -8,13 +8,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
-  // Bloquear scroll del body cuando el menú está abierto en mobile
+  // Bloquear scroll del body + emitir evento global
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    // bloquea scroll
+    document.body.style.overflow = isOpen ? 'hidden' : ''
+
+    // dispara evento global para otros componentes (como FilterDock)
+    window.dispatchEvent(new CustomEvent('nav:open', { detail: isOpen }))
+
+    // clase auxiliar en html (por si querés hacer animaciones globales)
+    document.documentElement.classList.toggle('nav-open', isOpen)
+
     return () => {
       document.body.style.overflow = ''
     }
@@ -90,21 +94,18 @@ export default function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Glow / fondo sofisticado */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(236,72,153,0.35),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(59,130,246,0.25),_transparent_55%)] opacity-90" />
 
             <div className="relative flex h-full flex-col justify-between px-6 py-7">
               {/* Top: logo + botón cerrar */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Image
-                    src="/jda-logo.png"
-                    alt="Jesús Díaz Automotores"
-                    width={130}
-                    height={42}
-                    className="h-9 w-auto object-contain"
-                  />
-                </div>
+                <Image
+                  src="/jda-logo.png"
+                  alt="Jesús Díaz Automotores"
+                  width={130}
+                  height={42}
+                  className="h-9 w-auto object-contain"
+                />
                 <button
                   onClick={closeMenu}
                   className="rounded-full border border-white/30 bg-black/40 px-3 py-1 text-xs font-medium text-slate-100 hover:bg-black/70 transition"
