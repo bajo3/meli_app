@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,64 +11,74 @@ type Props = {
 };
 
 export default function VehicleDetailClient({ vehicle }: Props) {
-  const pictures: string[] = Array.isArray(vehicle.pictures)
-    ? vehicle.pictures
-    : [];
-
+  const pictures: string[] = Array.isArray(vehicle.pictures) ? vehicle.pictures : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const mainPicture = pictures[activeIndex] ?? pictures[0] ?? null;
 
-  // Debug opcional
-  console.log('Vehicle desde Supabase:', vehicle);
+  const goNext = () =>
+    setActiveIndex((i) => (pictures.length ? (i + 1) % pictures.length : i));
+  const goPrev = () =>
+    setActiveIndex((i) => (pictures.length ? (i - 1 + pictures.length) % pictures.length : i));
 
-  // Cerrar modal con ESC
+  // Cerrar modal/Esc y navegar con flechas
   useEffect(() => {
     if (!isModalOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsModalOpen(false);
+      if (e.key === 'ArrowRight') goNext();
+      if (e.key === 'ArrowLeft') goPrev();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isModalOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModalOpen, activeIndex, pictures.length]);
 
-  // 🔧 LEER EN MAYÚSCULA O MINÚSCULA (por si la columna en Postgres es km/motor/etc.)
+  // Touch swipe en modal
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => (touchStartX.current = e.touches[0].clientX);
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 40) (dx < 0 ? goNext() : goPrev());
+    touchStartX.current = null;
+  };
+
+  // Datos flexibles
   const rawKm = vehicle.Km ?? vehicle.km;
   const km: number | null =
-    typeof rawKm === 'number'
-      ? rawKm
-      : rawKm
-        ? Number(String(rawKm).replace(/\D/g, ''))
-        : null;
-
+    typeof rawKm === 'number' ? rawKm : rawKm ? Number(String(rawKm).replace(/\D/g, '')) : null;
   const motor: string | null = vehicle.Motor ?? vehicle.motor ?? null;
-
   const caja: string | null =
-    vehicle.Caja ??
-    vehicle.caja ??
-    vehicle.Transmission ??
-    vehicle.transmission ??
-    null;
-
+    vehicle.Caja ?? vehicle.caja ?? vehicle.Transmission ?? vehicle.transmission ?? null;
   const combustible: string | null =
-    vehicle.Combustible ??
-    vehicle.combustible ??
-    vehicle.Fuel ??
-    vehicle.fuel ??
-    vehicle.fuel_type ??
-    null;
-
+    vehicle.Combustible ?? vehicle.combustible ?? vehicle.Fuel ?? vehicle.fuel ?? vehicle.fuel_type ?? null;
   const rawPuertas = vehicle.Puertas ?? vehicle.puertas ?? vehicle.doors;
   const puertas: number | null =
-    typeof rawPuertas === 'number'
-      ? rawPuertas
-      : rawPuertas
-        ? Number(String(rawPuertas).replace(/\D/g, ''))
-        : null;
+    typeof rawPuertas === 'number' ? rawPuertas : rawPuertas ? Number(String(rawPuertas).replace(/\D/g, '')) : null;
+
+  const status: string | undefined = vehicle.status ?? vehicle.estado;
 
   return (
-    <main className="min-h-screen bg-[#05030a] text-slate-100 px-4 py-8 md:py-10">
+    <main
+  className="relative min-h-screen text-slate-100 px-4 py-8 md:py-10"
+>
+  {/* Fondo texturizado premium */}
+  <div
+    className="
+      pointer-events-none 
+      fixed inset-0 -z-10 
+      bg-[#05030a]
+      bg-[radial-gradient(circle_at_top,_rgba(255,0,128,0.12),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(0,140,255,0.12),_transparent_60%)]
+      before:absolute before:inset-0 
+      before:bg-[url('/textures/noise.png')] 
+      before:opacity-[0.08] 
+      before:mix-blend-overlay
+    "
+  />
+
+
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         {/* Migas */}
         <nav className="text-xs text-slate-400">
@@ -76,38 +86,58 @@ export default function VehicleDetailClient({ vehicle }: Props) {
             Catálogo
           </Link>
           <span className="mx-1">›</span>
-          <span>{vehicle.title}</span>
+          <span className="text-slate-300 line-clamp-1">{vehicle.title}</span>
         </nav>
 
-        {/* Layout responsive: columna en mobile, dos columnas en desktop */}
+        {/* Layout */}
         <div className="flex flex-col items-start gap-8 lg:flex-row">
-          {/* ================= IZQUIERDA: GALERÍA ================= */}
+          {/* IZQUIERDA: GALERÍA */}
           <section className="w-full space-y-4 lg:w-1/2">
-            <div className="flex justify-center">
-              {/* CONTENEDOR FIJO */}
-              <div className="relative w-full max-w-[560px] aspect-[4/3] overflow-hidden rounded-xl border border-fuchsia-600/60 bg-black">
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              {/* Glow alrededor de la caja */}
+              <div className="pointer-events-none absolute -inset-2 -z-10 rounded-3xl bg-gradient-to-tr from-fuchsia-600/30 via-transparent to-blue-500/25 opacity-60 blur-2xl" />
+              <div className="relative w-full max-w-[560px] mx-auto aspect-[4/3] overflow-hidden rounded-2xl border border-fuchsia-600/70 bg-[#080812] shadow-[0_20px_60px_rgba(0,0,0,0.8)]">
+                {/* líneas diagonales suaves */}
+                <div className="pointer-events-none absolute inset-[-40%] opacity-[0.09] mix-blend-soft-light bg-[radial-gradient(circle_at_top,_rgba(248,250,252,0.35),_transparent_60%),repeating-linear-gradient(135deg,rgba(148,163,184,0.55)_0px,rgba(148,163,184,0.35)_1px,transparent_1px,transparent_10px)]" />
+
                 <AnimatePresence mode="wait">
                   {mainPicture ? (
-                    <motion.div
+                    <motion.button
                       key={activeIndex}
-                      className="absolute inset-0 cursor-zoom-in"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      type="button"
+                      className="absolute inset-0"
+                      initial={{ opacity: 0.15, scale: 1.02 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: 0.25 }}
                       onClick={() => setIsModalOpen(true)}
+                      aria-label="Ampliar imagen"
                     >
                       <Image
                         src={mainPicture}
                         alt={vehicle.title}
                         fill
-                        className="object-cover"
-                        sizes="(min-width: 1024px) 560px, (min-width: 640px) 90vw, 100vw"
-                        quality={95}
-                        unoptimized
+                        className="object-cover [image-rendering:-webkit-optimize-contrast]"
+                        sizes="(min-width:1024px) 560px, (min-width:640px) 90vw, 100vw"
+                        quality={96}
                         priority
                       />
-                    </motion.div>
+                      {/* banda inferior para lectura del auto */}
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+                      <div className="pointer-events-none absolute left-4 bottom-3 flex flex-col gap-0.5 text-left">
+                        <p className="text-[0.7rem] uppercase tracking-[0.18em] text-fuchsia-200/90">
+                          Jesús Díaz Automotores
+                        </p>
+                        <p className="text-xs text-slate-100/90 line-clamp-1">
+                          {vehicle.brand} {vehicle.model ?? ''} {vehicle.version ?? ''}
+                        </p>
+                      </div>
+                    </motion.button>
                   ) : (
                     <motion.div
                       key="empty"
@@ -121,28 +151,33 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                   )}
                 </AnimatePresence>
               </div>
-            </div>
 
-            <div className="px-3 pt-1 text-center text-[0.7rem] text-slate-200">
-              Asesores 2494-587046 / 2494-541756
-            </div>
+              {/* Etiqueta de asesores */}
+              <div className="mt-2 flex items-center justify-center text-[0.7rem] text-slate-300 gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full border border-fuchsia-500/40 bg-black/60 px-3 py-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Asesores 2494-587046 / 2494-541756
+                </span>
+              </div>
+            </motion.div>
 
             {/* Miniaturas */}
             {pictures.length > 1 && (
-              <div className="custom-scrollbar flex gap-2 overflow-x-auto pb-1">
+              <div className="custom-scrollbar flex gap-2 overflow-x-auto pb-1 pt-1">
                 {pictures.map((pic, idx) => {
                   const isActive = idx === activeIndex;
                   return (
                     <motion.button
                       key={idx}
                       type="button"
-                      whileHover={{ scale: 1.03 }}
+                      whileHover={{ scale: 1.05 }}
                       onClick={() => setActiveIndex(idx)}
                       className={`relative flex-shrink-0 h-16 w-24 sm:h-20 sm:w-28 overflow-hidden rounded-lg border bg-black ${
                         isActive
                           ? 'border-fuchsia-400 ring-2 ring-fuchsia-500'
                           : 'border-fuchsia-700/40'
                       }`}
+                      aria-label={`Ver imagen ${idx + 1}`}
                     >
                       <Image
                         src={pic}
@@ -167,135 +202,236 @@ export default function VehicleDetailClient({ vehicle }: Props) {
             </div>
           </section>
 
-          {/* ================= DERECHA: FICHA ================= */}
+          {/* DERECHA: FICHA */}
           <motion.aside
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="w-full rounded-2xl border border-fuchsia-700/50 bg-gradient-to-b from-[#111118] to-[#2b0b3a] p-6 shadow-lg shadow-black/50 lg:w-1/2 flex flex-col gap-4"
+            className="w-full rounded-2xl border border-fuchsia-700/60 bg-gradient-to-b from-[#111118] via-[#151528] to-[#2b0b3a] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.85)] lg:w-1/2 flex flex-col gap-4"
           >
-            <div>
-              <h1 className="text-2xl font-bold text-white">{vehicle.title}</h1>
+            {/* Header con estado + título */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <StatusBadge status={status} />
+              </div>
+
+              <h1 className="text-2xl font-semibold text-white md:text-3xl">
+                {vehicle.title}
+              </h1>
               <p className="mt-1 text-sm text-slate-400">
                 {vehicle.brand ?? 'Marca'} • {vehicle.year ?? 'Año'}{' '}
                 {vehicle.category ? `• ${vehicle.category}` : ''}
               </p>
+
+              {/* Chips rápidos */}
+              <div className="mt-3 flex flex-wrap gap-2 text-[0.7rem]">
+                {km !== null && (
+                  <QuickChip icon="📍" label={`${km.toLocaleString('es-AR')} km`} />
+                )}
+                {caja && <QuickChip icon="⚙️" label={caja} />}
+                {combustible && <QuickChip icon="⛽" label={combustible} />}
+                {puertas && <QuickChip icon="🚪" label={`${puertas} puertas`} />}
+              </div>
             </div>
 
+            {/* Línea separadora */}
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-fuchsia-500/40 to-transparent my-2" />
+
             {/* CARACTERÍSTICAS */}
-            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <div>
-                <p className="text-slate-400">Kilometraje</p>
-                <p className="font-semibold">
-                  {km !== null
-                    ? `${km.toLocaleString('es-AR')} km`
-                    : 'A consultar'}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400">Motor</p>
-                <p className="font-semibold">{motor ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-slate-400">Año</p>
-                <p className="font-semibold">{vehicle.year ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-slate-400">Transmisión</p>
-                <p className="font-semibold">{caja ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-slate-400">Combustible</p>
-                <p className="font-semibold">{combustible ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-slate-400">Puertas</p>
-                <p className="font-semibold">
-                  {puertas !== null ? puertas : '-'}
-                </p>
-              </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <Spec label="Kilometraje" value={km !== null ? `${km.toLocaleString('es-AR')} km` : 'A consultar'} />
+              <Spec label="Motor" value={motor ?? '-'} />
+              <Spec label="Año" value={vehicle.year ?? '-'} />
+              <Spec label="Transmisión" value={caja ?? '-'} />
+              <Spec label="Combustible" value={combustible ?? '-'} />
+              <Spec label="Puertas" value={puertas ?? '-'} />
             </div>
 
             {/* PRECIO */}
             {vehicle.price != null && (
-              <div className="mt-3">
-                <p className="text-xs text-slate-400 uppercase tracking-wide">
-                  Precio
+              <div className="mt-4 rounded-xl bg-black/40 p-3 border border-fuchsia-700/60">
+                <p className="text-[0.7rem] text-slate-400 uppercase tracking-[0.2em]">
+                  Precio final
                 </p>
-                <p className="text-2xl font-bold text-white">
-                  $
-                  {vehicle.price.toLocaleString('es-AR', {
-                    maximumFractionDigits: 0,
-                  })}
+                <p className="mt-1 text-2xl font-bold text-white">
+                  ${vehicle.price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                </p>
+                <p className="mt-1 text-[0.7rem] text-slate-500">
+                  Confirmar vigencia y condiciones con un asesor.
                 </p>
               </div>
             )}
 
+            {/* Notas / descripción si existe */}
+            {vehicle.description && (
+              <div className="mt-2 rounded-lg bg-black/30 p-3 text-xs text-slate-300 border border-white/5 max-h-32 overflow-auto">
+                {vehicle.description}
+              </div>
+            )}
+
             {/* BOTONES */}
-            <div className="mt-auto flex flex-col gap-3">
+            <div className="mt-auto flex flex-col gap-3 pt-2">
               <motion.a
                 whileTap={{ scale: 0.97 }}
                 href={`https://wa.me/5492494XXXXXX?text=Hola! Estoy interesado en el ${encodeURIComponent(
-                  vehicle.title,
+                  vehicle.title
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full rounded-xl bg-fuchsia-600 py-2 text-center text-sm font-semibold text-white hover:bg-fuchsia-500 transition"
+                className="block w-full rounded-xl bg-fuchsia-600 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-fuchsia-800/40 hover:bg-fuchsia-500 transition"
               >
-                💬 Consultar
+                💬 Consultar por este vehículo
               </motion.a>
+
+              
+
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 className="w-full rounded-xl border border-slate-600 py-2 text-sm text-slate-300 hover:bg-slate-800 transition"
               >
-                🔗 Compartir
+                🔗 Compartir ficha
               </motion.button>
             </div>
           </motion.aside>
         </div>
       </div>
 
-      {/* MODAL FOTO GRANDE */}
+      {/* MODAL / VIEWER */}
       <AnimatePresence>
         {isModalOpen && mainPicture && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsModalOpen(false)}
           >
             <motion.div
-              className="relative max-w-[90vw] max-h-[90vh] rounded-xl overflow-hidden border border-fuchsia-500 bg-black"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-[96vw] max-h-[92vh] rounded-xl overflow-hidden border border-fuchsia-500/50 bg-[#050712]"
+              initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              exit={{ scale: 0.97, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={(e: React.MouseEvent<HTMLDivElement>) =>
-                e.stopPropagation()
-              }
+              onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
             >
-              <div className="relative w-[80vw] max-w-4xl aspect-[16/9] md:w-[70vw]">
+              <div className="relative w-[92vw] max-w-5xl aspect-[16/9] md:w-[80vw]">
                 <Image
-                  src={mainPicture}
-                  alt={vehicle.title}
+                  key={activeIndex}
+                  src={pictures[activeIndex]}
+                  alt={`${vehicle.title} grande`}
                   fill
-                  className="object-contain"
+                  className="object-contain [image-rendering:-webkit-optimize-contrast]"
                   sizes="100vw"
+                  quality={98}
+                  priority
                 />
               </div>
 
-              <button
-                type="button"
-                className="absolute right-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-slate-100 hover:bg-black"
-                onClick={() => setIsModalOpen(false)}
-              >
-                ✕ Cerrar
-              </button>
+              {pictures.length > 1 && (
+                <>
+                  {/* Zonas click izquierda / derecha */}
+                  <button
+                    aria-label="Anterior"
+                    onClick={goPrev}
+                    className="absolute left-0 top-0 h-full w-[18%] md:w-[14%] cursor-w-resize bg-gradient-to-r from-black/10 to-transparent"
+                  />
+                  <button
+                    aria-label="Siguiente"
+                    onClick={goNext}
+                    className="absolute right-0 top-0 h-full w-[18%] md:w-[14%] cursor-e-resize bg-gradient-to-l from-black/10 to-transparent"
+                  />
+
+                  {/* Barra superior */}
+                  <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-2">
+                    <span className="pointer-events-auto rounded-full bg-black/70 px-2.5 py-1 text-[0.7rem] text-slate-200">
+                      {activeIndex + 1} / {pictures.length}
+                    </span>
+                    <button
+                      onClick={() => setIsModalOpen(false)}
+                      className="pointer-events-auto rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-slate-100 hover:bg-black"
+                      aria-label="Cerrar"
+                    >
+                      ✕ Cerrar
+                    </button>
+                  </div>
+
+                  {/* Tira de miniaturas abajo */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                    <div className="mx-auto flex max-w-5xl gap-2 overflow-x-auto">
+                      {pictures.map((p, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActiveIndex(i)}
+                          className={`relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-md border ${
+                            i === activeIndex ? 'border-fuchsia-400 ring-1 ring-fuchsia-500' : 'border-white/20'
+                          }`}
+                          aria-label={`Ir a imagen ${i + 1}`}
+                        >
+                          <Image src={p} alt={`thumb ${i + 1}`} fill className="object-cover" sizes="80px" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
     </main>
+  );
+}
+
+/* --- helpers visuales --- */
+
+function Spec({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[0.7rem] uppercase tracking-[0.16em] text-slate-500">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-slate-50">{value}</p>
+    </div>
+  );
+}
+
+function QuickChip({ icon, label }: { icon: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[0.7rem] text-slate-200">
+      <span>{icon}</span>
+      <span className="truncate max-w-[120px]">{label}</span>
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status?: string }) {
+  const s = (status ?? 'disponible').toLowerCase();
+  const map: Record<
+    string,
+    { label: string; className: string }
+  > = {
+    disponible: {
+      label: 'Disponible',
+      className: 'bg-emerald-900/50 text-emerald-300 border-emerald-500/40',
+    },
+    reserva: {
+      label: 'Reservado',
+      className: 'bg-amber-900/40 text-amber-200 border-amber-500/50',
+    },
+    vendido: {
+      label: 'Vendido',
+      className: 'bg-rose-900/50 text-rose-200 border-rose-500/50',
+    },
+  };
+
+  const conf = map[s] ?? map.disponible;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.7rem] font-medium ${conf.className}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+      {conf.label}
+    </span>
   );
 }

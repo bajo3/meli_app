@@ -21,6 +21,7 @@ export default function Header() {
 
     return () => {
       document.body.style.overflow = ''
+      document.documentElement.classList.remove('nav-open')
     }
   }, [isOpen])
 
@@ -34,36 +35,69 @@ export default function Header() {
   ]
 
   return (
-    <header className="bg-[#05030a] border-b border-fuchsia-800/40 sticky top-0 z-40">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+    <header className="sticky top-0 z-40 border-b border-fuchsia-800/40 bg-[#05030a] md:bg-[#05030a]/90 md:backdrop-blur-md">
+
+      {/* glow superior sutil */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-fuchsia-500/40 to-transparent" />
+
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:py-4">
         {/* Logo / Brand */}
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white">
+        <Link href="/" className="flex items-center gap-3">
           <Image
             src="/jda-logo.png"
             alt="Jesús Díaz Automotores"
-            width={120}
-            height={40}
-            className="h-8 w-auto object-contain"
+            width={140}
+            height={44}
+            className="h-9 w-auto object-contain drop-shadow-[0_0_15px_rgba(244,114,182,0.5)]"
             priority
           />
+          <div className="hidden flex-col leading-tight sm:flex">
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-fuchsia-300">
+              Jesús Díaz Automotores
+            </span>
+            <span className="text-xs text-slate-400">
+              Autos seleccionados · Catálogo conectado a Mercado Libre
+            </span>
+          </div>
         </Link>
 
         {/* NAV LINKS - DESKTOP */}
-        <nav className="hidden md:flex items-center gap-8 text-sm">
+        <nav className="hidden items-center gap-6 text-sm md:flex">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-slate-300 hover:text-white transition-colors"
+              className={`relative px-1 text-slate-300 transition-colors hover:text-white ${
+                link.href === '/catalogo'
+                  ? 'font-semibold text-fuchsia-200'
+                  : ''
+              }`}
             >
+              {/* pill sutil para Catálogo */}
+              {link.href === '/catalogo' && (
+                <span className="pointer-events-none absolute inset-x-0 -bottom-1 h-[2px] rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-400 to-blue-400 opacity-80" />
+              )}
               {link.label}
             </Link>
           ))}
         </nav>
 
-        {/* BOTÓN HAMBURGUESA - MOBILE */}
+        {/* CTA DESKTOP */}
+        <div className="hidden items-center gap-2 md:flex">
+          <a
+            href="https://wa.me/5492494587046"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/60 bg-fuchsia-600/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 shadow-[0_0_20px_rgba(244,114,182,0.35)] transition hover:bg-fuchsia-500/30 hover:border-fuchsia-400"
+          >
+            <span className="text-base">💬</span>
+            <span>Consultá tu próximo auto</span>
+          </a>
+        </div>
+
+        {/* BOTÓN HAMBURGUESA - MOBILE (misma idea) */}
         <button
-          className="md:hidden flex flex-col items-end justify-center gap-[5px]"
+          className="flex flex-col items-end justify-center gap-[5px] md:hidden"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label="Abrir menú"
         >
@@ -94,6 +128,7 @@ export default function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            {/* Glow / fondo sofisticado */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(236,72,153,0.35),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(59,130,246,0.25),_transparent_55%)] opacity-90" />
 
             <div className="relative flex h-full flex-col justify-between px-6 py-7">
@@ -108,7 +143,7 @@ export default function Header() {
                 />
                 <button
                   onClick={closeMenu}
-                  className="rounded-full border border-white/30 bg-black/40 px-3 py-1 text-xs font-medium text-slate-100 hover:bg-black/70 transition"
+                  className="rounded-full border border-white/30 bg-black/40 px-3 py-1 text-xs font-medium text-slate-100 transition hover:bg-black/70"
                 >
                   Cerrar
                 </button>
@@ -127,7 +162,7 @@ export default function Header() {
                     transition: { staggerChildren: 0.06 },
                   },
                 }}
-                className="flex flex-col items-start gap-4 mt-8"
+                className="mt-8 flex flex-col items-start gap-4"
               >
                 {links.map((link, index) => (
                   <motion.li
@@ -140,7 +175,7 @@ export default function Header() {
                     <Link
                       href={link.href}
                       onClick={closeMenu}
-                      className="text-2xl font-semibold text-slate-50 tracking-wide hover:text-fuchsia-300 transition"
+                      className="text-2xl font-semibold tracking-wide text-slate-50 transition hover:text-fuchsia-300"
                     >
                       <span className="mr-2 text-xs text-fuchsia-300/80">
                         {index + 1}.
@@ -157,14 +192,15 @@ export default function Header() {
                   Jesús Díaz Automotores
                 </p>
                 <p className="text-xs text-slate-300">
-                  Autos seleccionados, atención personalizada y catálogo conectado a Mercado Libre.
+                  Autos seleccionados, atención personalizada y catálogo
+                  conectado a Mercado Libre.
                 </p>
 
                 <a
-                  href="https://wa.me/5492494XXXXXX"
+                  href="https://wa.me/5492494587046"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-fuchsia-800/40 hover:bg-fuchsia-500 transition"
+                  className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-fuchsia-800/40 transition hover:bg-fuchsia-500"
                   onClick={closeMenu}
                 >
                   💬 Escribinos por WhatsApp

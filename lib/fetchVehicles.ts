@@ -105,14 +105,41 @@ function extractVehicleDetails(attributes: any[]): {
 /**
  * Normaliza las URLs de imágenes de Mercado Libre a la versión original (-O.jpg)
  */
-function normalizeMeliImageUrl(url: string): string {
-  if (!url) return url
-  // Reemplaza versiones reducidas (-I.jpg, -N.jpg, -C.jpg) por la original (-O.jpg)
-  return url
-    .replace(/-I\./g, '-O.')
-    .replace(/-N\./g, '-O.')
-    .replace(/-C\./g, '-O.')
+// lib/normalizeMeliImageUrl.ts
+
+/**
+ * Normaliza una URL de imagen de Mercado Libre:
+ * - Fuerza https
+ * - Fuerza la versión original (-O.jpg)
+ */
+export function normalizeMeliImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+
+  let cleaned = url.trim();
+
+  // 1) Forzar HTTPS
+  cleaned = cleaned.replace(/^http:\/\//i, 'https://');
+
+  // 2) Forzar sufijo -O.jpg (tamaño original)
+  // Ejemplos que corrige:
+  //  - D_12345-MLA123456789_112025-I.jpg -> ...-O.jpg
+  //  - D_12345-MLA123456789_112025-N.jpg -> ...-O.jpg
+  cleaned = cleaned.replace(/-[A-Z]\.jpg$/i, '-O.jpg');
+
+  return cleaned;
 }
+
+/**
+ * Normaliza un array de urls de imágenes de ML
+ */
+export function normalizeMeliPictures(urls: unknown): string[] {
+  if (!Array.isArray(urls)) return [];
+
+  return urls
+    .map((u) => (typeof u === 'string' ? normalizeMeliImageUrl(u) : ''))
+    .filter(Boolean);
+}
+
 
 /**
  * Normaliza un item de ML al formato Vehicle.
