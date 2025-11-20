@@ -12,7 +12,6 @@ import SortMenu from '@/components/SortMenu';
 import FilterChips, { QuickFilters } from '@/components/FilterChips';
 import FilterSheet, { AdvancedFilters } from '@/components/FilterSheet';
 import VehicleCard from '@/components/VehicleCard';
-import CompareBar from '@/components/CompareBar';
 
 type Props = { vehicles: Vehicle[] };
 
@@ -22,9 +21,9 @@ export default function CatalogoClient({ vehicles }: Props) {
   const [brand, setBrand] = useState<'all' | string>('all');
 
   // orden + vista + densidad
-  const [sort, setSort] = useState<'price-asc'|'price-desc'|'year-desc'|'km-asc'|'recent'>('price-asc');
-  const [view, setView] = useState<'grid'|'list'>('grid');
-  const [density, setDensity] = useState<'comfy'|'compact'>('comfy');
+  const [sort, setSort] = useState<'price-asc' | 'price-desc' | 'year-desc' | 'km-asc' | 'recent'>('price-asc');
+  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [density, setDensity] = useState<'comfy' | 'compact'>('comfy');
 
   // filtros rápidos
   const [quick, setQuick] = useState<QuickFilters>({});
@@ -40,7 +39,10 @@ export default function CatalogoClient({ vehicles }: Props) {
   // transición para shimmer
   const [isPending, startTransition] = useTransition();
   const [ready, setReady] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setReady(true), 300); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 300);
+    return () => clearTimeout(t);
+  }, []);
   const showSkeleton = !ready || isPending;
 
   // marcas únicas
@@ -96,17 +98,17 @@ export default function CatalogoClient({ vehicles }: Props) {
     // sort
     list.sort((a, b) => {
       const pa = a.price ?? 0; const pb = b.price ?? 0;
-      const ya = a.year ?? 0;  const yb = b.year ?? 0;
+      const ya = a.year ?? 0; const yb = b.year ?? 0;
       const kma = (a as any).Km ?? (a as any).km ?? 0;
       const kmb = (b as any).Km ?? (b as any).km ?? 0;
 
       switch (sort) {
-        case 'price-asc':  return pa - pb;
+        case 'price-asc': return pa - pb;
         case 'price-desc': return pb - pa;
-        case 'year-desc':  return yb - ya;
-        case 'km-asc':     return kma - kmb;
-        case 'recent':     return (b as any).created_at?.localeCompare?.((a as any).created_at ?? '') ?? 0;
-        default:           return 0;
+        case 'year-desc': return yb - ya;
+        case 'km-asc': return kma - kmb;
+        case 'recent': return (b as any).created_at?.localeCompare?.((a as any).created_at ?? '') ?? 0;
+        default: return 0;
       }
     });
 
@@ -115,19 +117,27 @@ export default function CatalogoClient({ vehicles }: Props) {
 
   // helpers
   const activeAdvCount =
-    (adv.priceMin?1:0)+(adv.priceMax?1:0)+(adv.yearMin?1:0)+(adv.yearMax?1:0)+(adv.kmMax?1:0)
-    + adv.transmission.size + adv.fuel.size + adv.state.size - (adv.state.has('disponible')?1:0);
+    (adv.priceMin ? 1 : 0) +
+    (adv.priceMax ? 1 : 0) +
+    (adv.yearMin ? 1 : 0) +
+    (adv.yearMax ? 1 : 0) +
+    (adv.kmMax ? 1 : 0) +
+    adv.transmission.size +
+    adv.fuel.size +
+    adv.state.size -
+    (adv.state.has('disponible') ? 1 : 0);
 
   const clearAll = () => {
     startTransition(() => {
-      setSearch(''); setBrand('all'); setSort('price-asc'); setView('grid'); setDensity('comfy');
-      setQuick({}); setAdv({ transmission:new Set(), fuel:new Set(), state:new Set(['disponible']) });
+      setSearch('');
+      setBrand('all');
+      setSort('price-asc');
+      setView('grid');
+      setDensity('comfy');
+      setQuick({});
+      setAdv({ transmission: new Set(), fuel: new Set(), state: new Set(['disponible']) });
     });
   };
-
-  // comparar
-  const [compare, setCompare] = useState<string[]>([]);
-  const toggleCompare = (id: string) => setCompare(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=3 ? prev : [...prev, id]);
 
   return (
     <main className="min-h-screen bg-[#05030a] text-slate-100">
@@ -141,14 +151,19 @@ export default function CatalogoClient({ vehicles }: Props) {
 
           <div className="flex flex-col gap-2 md:items-end">
             <ResultStats total={filtered.length} activeCount={activeAdvCount} onClear={clearAll} />
-            <SortMenu sort={sort} onSort={(v)=>startTransition(()=>setSort(v))}
-                      view={view} onView={(v)=>setView(v)}
-                      density={density} onDensity={(v)=>setDensity(v)} />
+            <SortMenu
+              sort={sort}
+              onSort={(v) => startTransition(() => setSort(v))}
+              view={view}
+              onView={(v) => setView(v)}
+              density={density}
+              onDensity={(v) => setDensity(v)}
+            />
           </div>
         </header>
 
         {/* Chips rápidos */}
-        <FilterChips value={quick} onChange={(v)=>startTransition(()=>setQuick(v))} />
+        <FilterChips value={quick} onChange={(v) => startTransition(() => setQuick(v))} />
 
         {/* Barra filtros + búsqueda + marca + abrir sheet */}
         <section className="flex flex-col gap-3 rounded-xl bg-[#111118] p-3 shadow-md shadow-black/40 md:flex-row md:items-center md:justify-between">
@@ -157,22 +172,26 @@ export default function CatalogoClient({ vehicles }: Props) {
               type="text"
               placeholder="Buscar por modelo, marca..."
               value={search}
-              onChange={(e)=>startTransition(()=>setSearch(e.target.value))}
+              onChange={(e) => startTransition(() => setSearch(e.target.value))}
               className="w-full rounded-lg border border-fuchsia-700/40 bg-[#05030a] px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 md:max-w-xs"
             />
             <select
               className="w-full rounded-lg border border-fuchsia-700/40 bg-[#05030a] px-3 py-2 text-sm text-slate-100 outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 md:w-44"
               value={brand}
-              onChange={(e)=>startTransition(()=>setBrand(e.target.value))}
+              onChange={(e) => startTransition(() => setBrand(e.target.value))}
             >
               <option value="all">Todas las marcas</option>
-              {brands.map((b)=>(<option key={b} value={b}>{b}</option>))}
+              {brands.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={()=>setOpenSheet(true)}
+              onClick={() => setOpenSheet(true)}
               className="rounded-lg border border-fuchsia-500 bg-fuchsia-500/10 px-3 py-2 text-sm font-semibold text-fuchsia-200 hover:bg-fuchsia-500/20"
             >
               Filtros
@@ -181,23 +200,36 @@ export default function CatalogoClient({ vehicles }: Props) {
         </section>
 
         {/* Grid / Lista */}
-        {(!ready || isPending) ? (
+        {showSkeleton ? (
           <SkeletonGrid count={12} />
         ) : filtered.length === 0 ? (
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <Image src="/empty.png" alt="" width={120} height={120} className="opacity-60" />
+          <div className="mt-10 flex flex-col items-center gap-3 py-10">
             <p className="text-sm text-slate-400">No se encontraron vehículos con los filtros.</p>
-            <button onClick={clearAll} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300 hover:bg-white/5">Limpiar filtros</button>
+            <button
+              onClick={clearAll}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300 hover:bg-white/5"
+            >
+              Limpiar filtros
+            </button>
           </div>
         ) : view === 'grid' ? (
-          <section className={`grid gap-4 sm:grid-cols-2 ${density==='compact'?'lg:grid-cols-4':'lg:grid-cols-3'}`}>
+          // GRID — Solo se renderiza si hay resultados
+          <section
+            className={`grid gap-4 sm:grid-cols-2 ${
+              density === 'compact' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+            }`}
+          >
             {filtered.map((v) => {
               const cover = v.pictures?.[0] || '/placeholder-car.jpg';
-              const priceFmt = v.price != null ? `$${v.price.toLocaleString('es-AR',{maximumFractionDigits:0})}` : 'Consultar';
+              const priceFmt =
+                v.price != null
+                  ? `$${v.price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                  : 'Consultar';
               const meta = `${v.brand || '—'}${v.year ? ` · ${v.year}` : ''}`;
               const km = (v as any).Km ?? (v as any).km;
               const fuel = (v as any).Combustible ?? (v as any).fuel ?? (v as any).fuel_type;
               const caja = (v as any).Caja ?? (v as any).transmission;
+
               const badges = [
                 (v as any).estado?.toUpperCase?.(),
                 km != null ? `${Number(km).toLocaleString('es-AR')} KM` : null,
@@ -205,10 +237,10 @@ export default function CatalogoClient({ vehicles }: Props) {
                 caja ? String(caja).toUpperCase() : null,
               ].filter(Boolean) as string[];
 
-              const state = ((v as any).state as 'disponible'|'reserva'|'vendido') ?? 'disponible';
+              const state = ((v as any).state as 'disponible' | 'reserva' | 'vendido') ?? 'disponible';
 
               return (
-                <div key={v.id} className="relative">
+                <div key={v.id}>
                   <VehicleCard
                     title={v.title}
                     href={v.slug ? `/catalogo/${v.slug}` : '#'}
@@ -217,36 +249,37 @@ export default function CatalogoClient({ vehicles }: Props) {
                     meta={meta}
                     badges={badges}
                     ribbon={state}
-                    dense={density==='compact'}
+                    dense={density === 'compact'}
                   />
-                  <label className="absolute right-3 top-3 flex select-none items-center gap-1 rounded-md bg-black/50 px-2 py-1 text-[10px] text-slate-200 backdrop-blur-sm">
-                    <input
-                      type="checkbox"
-                      className="h-3 w-3 accent-fuchsia-500"
-                      checked={compare.includes(String(v.id))}
-                      onChange={()=>toggleCompare(String(v.id))}
-                    />
-                    Comparar
-                  </label>
                 </div>
               );
             })}
           </section>
         ) : (
+          // LISTA — Solo aparece si hay resultados
           <section className="flex flex-col gap-3">
-            {filtered.map((v)=> {
+            {filtered.map((v) => {
               const cover = v.pictures?.[0] || '/placeholder-car.jpg';
-              const priceFmt = v.price != null ? `$${v.price.toLocaleString('es-AR',{maximumFractionDigits:0})}` : 'Consultar';
+              const priceFmt =
+                v.price != null
+                  ? `$${v.price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                  : 'Consultar';
               const meta = `${v.brand || '—'}${v.year ? ` · ${v.year}` : ''}`;
               return (
-                <Link key={v.id} href={v.slug ? `/catalogo/${v.slug}` : '#'} className="flex gap-3 rounded-xl border border-white/10 bg-[#111118] p-3 hover:bg-white/[0.02]">
+                <Link
+                  key={v.id}
+                  href={v.slug ? `/catalogo/${v.slug}` : '#'}
+                  className="flex gap-3 rounded-xl border border-white/10 bg-[#111118] p-3 hover:bg-white/[0.02]"
+                >
                   <div className="relative h-24 w-32 overflow-hidden rounded-lg">
                     <Image src={cover} alt={v.title} fill className="object-cover" />
                   </div>
                   <div className="flex flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm font-semibold text-white line-clamp-2">{v.title}</h3>
-                      <span className="whitespace-nowrap text-right text-base font-bold text-fuchsia-400">{priceFmt}</span>
+                      <span className="whitespace-nowrap text-right text-base font-bold text-fuchsia-400">
+                        {priceFmt}
+                      </span>
                     </div>
                     <p className="text-xs text-slate-400">{meta}</p>
                   </div>
@@ -260,32 +293,36 @@ export default function CatalogoClient({ vehicles }: Props) {
       {/* Filter Dock (mobile) */}
       <FilterDock visible>
         <button
-          onClick={()=>setOpenSheet(true)}
+          onClick={() => setOpenSheet(true)}
           className="rounded-xl border border-fuchsia-500 bg-fuchsia-500/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-200"
         >
           Filtros
         </button>
         <button
-          onClick={()=>setSort(s=>s==='price-asc'?'price-desc':'price-asc')}
+          onClick={() => setSort((s) => (s === 'price-asc' ? 'price-desc' : 'price-asc'))}
           className="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-slate-200 hover:bg-white/5"
         >
-          {sort==='price-asc'?'↑ Precio':'↓ Precio'}
+          {sort === 'price-asc' ? '↑ Precio' : '↓ Precio'}
         </button>
         <div className="relative">
           <select
             value={brand}
-            onChange={(e)=>setBrand(e.target.value)}
+            onChange={(e) => setBrand(e.target.value)}
             className="rounded-xl border border-white/10 bg-transparent px-3 py-1.5 text-xs text-slate-200"
           >
             <option value="all">Todas</option>
-            {brands.map((b)=>(<option key={b} value={b}>{b}</option>))}
+            {brands.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
           </select>
         </div>
         <button
-          onClick={()=>setView(v=>v==='grid'?'list':'grid')}
+          onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
           className="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-slate-200 hover:bg-white/5"
         >
-          {view==='grid'?'Lista':'Grid'}
+          {view === 'grid' ? 'Lista' : 'Grid'}
         </button>
       </FilterDock>
 
@@ -295,15 +332,10 @@ export default function CatalogoClient({ vehicles }: Props) {
         onOpenChange={setOpenSheet}
         value={adv}
         onChange={setAdv}
-        onApply={()=>{}}
-        onClear={()=>setAdv({ transmission:new Set(), fuel:new Set(), state:new Set(['disponible']) })}
-      />
-
-      {/* Barra comparador */}
-      <CompareBar
-        count={compare.length}
-        onOpen={() => alert('Acá mostramos la vista comparador (lo armamos si querés).')}
-        onClear={() => setCompare([])}
+        onApply={() => {}}
+        onClear={() =>
+          setAdv({ transmission: new Set(), fuel: new Set(), state: new Set(['disponible']) })
+        }
       />
     </main>
   );

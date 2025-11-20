@@ -99,47 +99,37 @@ function extractVehicleDetails(attributes: any[]): {
 }
 
 /**
- * Normaliza un item de ML al formato Vehicle.
- */
-/**
-/**
- * Normaliza las URLs de imágenes de Mercado Libre a la versión original (-O.jpg)
- */
-// lib/normalizeMeliImageUrl.ts
-
-/**
  * Normaliza una URL de imagen de Mercado Libre:
  * - Fuerza https
  * - Fuerza la versión original (-O.jpg)
  */
 export function normalizeMeliImageUrl(url: string | null | undefined): string {
-  if (!url) return '';
+  if (!url) return ''
 
-  let cleaned = url.trim();
+  let cleaned = url.trim()
 
   // 1) Forzar HTTPS
-  cleaned = cleaned.replace(/^http:\/\//i, 'https://');
+  cleaned = cleaned.replace(/^http:\/\//i, 'https://')
 
   // 2) Forzar sufijo -O.jpg (tamaño original)
   // Ejemplos que corrige:
   //  - D_12345-MLA123456789_112025-I.jpg -> ...-O.jpg
   //  - D_12345-MLA123456789_112025-N.jpg -> ...-O.jpg
-  cleaned = cleaned.replace(/-[A-Z]\.jpg$/i, '-O.jpg');
+  cleaned = cleaned.replace(/-[A-Z]\.jpg$/i, '-O.jpg')
 
-  return cleaned;
+  return cleaned
 }
 
 /**
  * Normaliza un array de urls de imágenes de ML
  */
 export function normalizeMeliPictures(urls: unknown): string[] {
-  if (!Array.isArray(urls)) return [];
+  if (!Array.isArray(urls)) return []
 
   return urls
     .map((u) => (typeof u === 'string' ? normalizeMeliImageUrl(u) : ''))
-    .filter(Boolean);
+    .filter(Boolean)
 }
-
 
 /**
  * Normaliza un item de ML al formato Vehicle.
@@ -182,6 +172,7 @@ function normalizeItem(item: any): Vehicle {
 
 /**
  * Trae todos los vehículos de ML y los guarda/actualiza en Supabase.
+ * Luego BORRA de Supabase todo vehículo cuyo id ya no exista en ML.
  */
 export async function fetchAndStoreVehicles(): Promise<{ count: number }> {
   const supabase = getSupabase()
@@ -196,7 +187,7 @@ export async function fetchAndStoreVehicles(): Promise<{ count: number }> {
   let offset = 0
   const limit = 50
 
-  // 1) IDs de items activos
+  // 1) IDs de items activos en ML
   while (true) {
     const searchUrl = new URL(
       `https://api.mercadolibre.com/users/${userId}/items/search`,
@@ -217,6 +208,8 @@ export async function fetchAndStoreVehicles(): Promise<{ count: number }> {
 
     const searchData = await searchResp.json()
     const results: string[] = searchData.results || []
+
+    // agregamos todos los IDs al array
     allItemIds.push(...results)
 
     if (results.length < limit) break
@@ -224,7 +217,9 @@ export async function fetchAndStoreVehicles(): Promise<{ count: number }> {
   }
 
   if (allItemIds.length === 0) {
-    console.log('No se encontraron items activos.')
+    console.log('No se encontraron items activos en MercadoLibre.')
+    // OJO: si querés que esto también limpie Supabase cuando no hay ninguno,
+    // podemos agregar un borrado total acá. Por ahora, no toca la tabla.
     return { count: 0 }
   }
 
@@ -275,15 +270,46 @@ export async function fetchAndStoreVehicles(): Promise<{ count: number }> {
     Puertas: v.Puertas,
   }))
 
-  // Debug opcional para ver que sí tienen Km/Motor/etc.
   console.log('Ejemplo row a upsert:', rows[0])
 
-  const { error } = await supabase.from('vehicles').upsert(rows, {
+  const { error: upsertError } = await supabase.from('vehicles').upsert(rows, {
     onConflict: 'id',
   })
 
-  if (error) {
-    throw error
+  if (upsertError) {
+    throw upsertError
+  }
+
+  // 4) BORRAR de Supabase los vehículos que ya no están en MercadoLibre
+  //    (hacemos diff en Node para no pelear con el NOT IN string de PostgREST)
+  const { data: existingRows, error: selectError } = await supabase
+    .from('vehicles')
+    .select('id')
+
+  if (selectError) {
+    console.error('Error leyendo IDs existentes de vehicles:', selectError)
+  } else if (existingRows) {
+    const activeSet = new Set(allItemIds)
+    const idsToDelete = existingRows
+      .map((row: { id: string }) => row.id)
+      .filter((id) => !activeSet.has(id))
+
+    if (idsToDelete.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('vehicles')
+        .delete()
+        .in('id', idsToDelete)
+
+      if (deleteError) {
+        console.error('Error borrando vehículos que ya no están en ML:', deleteError)
+      } else {
+        console.log(
+          `Borrados ${idsToDelete.length} vehículos que ya no están activos en ML.`,
+        )
+      }
+    } else {
+      console.log('No hay vehículos para borrar: Supabase ya coincide con ML.')
+    }
   }
 
   return { count: rows.length }

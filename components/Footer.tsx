@@ -68,7 +68,7 @@ export default function Footer() {
             </p>
             <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-[0.7rem] text-emerald-200">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              Atendemos con turno y en sala de ventas.
+              ¡Cotiza tu proximo auto con nosotros!
             </p>
           </div>
 
@@ -122,7 +122,7 @@ export default function Footer() {
                 <span>Facebook</span>
               </a>
               <a
-                href="https://wa.me/5492494587046"
+                href="https://wa.me/5492494621182"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 hover:border-fuchsia-400 hover:bg-fuchsia-500/10 hover:text-white transition-colors"

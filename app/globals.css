@@ -45,3 +45,14 @@
     transform: translateX(100%);
   }
 }
+
+
+/* Ocultar scrollbar feo pero mantener el scroll */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE y Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;            /* Chrome, Safari, etc */
+}

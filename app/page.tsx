@@ -51,7 +51,7 @@ export default function Home() {
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-fuchsia-200 shadow-[0_0_30px_rgba(244,114,182,0.25)]"
             >
-              Catálogo conectado a Mercado Libre
+              Catálogo siempre actualizado
             </motion.p>
 
             <motion.h1
@@ -142,9 +142,6 @@ export default function Home() {
             {/* Etiquetas flotantes */}
             <div className="pointer-events-none absolute -left-2 -bottom-3 rounded-2xl border border-slate-700 bg-black/70 px-4 py-2 text-xs text-slate-200 shadow-lg backdrop-blur">
               Más de <span className="font-semibold text-fuchsia-300">40</span> unidades en stock
-            </div>
-            <div className="pointer-events-none absolute -right-3 top-3 rounded-2xl border border-fuchsia-500 bg-black/80 px-4 py-2 text-xs font-semibold text-fuchsia-100 shadow-lg backdrop-blur">
-              Atención personalizada
             </div>
           </motion.div>
         </div>

@@ -53,31 +53,37 @@ export default function VehicleDetailClient({ vehicle }: Props) {
   const caja: string | null =
     vehicle.Caja ?? vehicle.caja ?? vehicle.Transmission ?? vehicle.transmission ?? null;
   const combustible: string | null =
-    vehicle.Combustible ?? vehicle.combustible ?? vehicle.Fuel ?? vehicle.fuel ?? vehicle.fuel_type ?? null;
+    vehicle.Combustible ??
+    vehicle.combustible ??
+    vehicle.Fuel ??
+    vehicle.fuel ??
+    vehicle.fuel_type ??
+    null;
   const rawPuertas = vehicle.Puertas ?? vehicle.puertas ?? vehicle.doors;
   const puertas: number | null =
-    typeof rawPuertas === 'number' ? rawPuertas : rawPuertas ? Number(String(rawPuertas).replace(/\D/g, '')) : null;
+    typeof rawPuertas === 'number'
+      ? rawPuertas
+      : rawPuertas
+        ? Number(String(rawPuertas).replace(/\D/g, ''))
+        : null;
 
   const status: string | undefined = vehicle.status ?? vehicle.estado;
 
   return (
-    <main
-  className="relative min-h-screen text-slate-100 px-4 py-8 md:py-10"
->
-  {/* Fondo texturizado premium */}
-  <div
-    className="
-      pointer-events-none 
-      fixed inset-0 -z-10 
-      bg-[#05030a]
-      bg-[radial-gradient(circle_at_top,_rgba(255,0,128,0.12),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(0,140,255,0.12),_transparent_60%)]
-      before:absolute before:inset-0 
-      before:bg-[url('/textures/noise.png')] 
-      before:opacity-[0.08] 
-      before:mix-blend-overlay
-    "
-  />
-
+    <main className="relative min-h-screen text-slate-100 px-4 py-8 md:py-10">
+      {/* Fondo texturizado premium */}
+      <div
+        className="
+        pointer-events-none 
+        fixed inset-0 -z-10 
+        bg-[#05030a]
+        bg-[radial-gradient(circle_at_top,_rgba(255,0,128,0.12),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(0,140,255,0.12),_transparent_60%)]
+        before:absolute before:inset-0 
+        before:bg-[url('/textures/noise.png')] 
+        before:opacity-[0.08] 
+        before:mix-blend-overlay
+      "
+      />
 
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         {/* Migas */}
@@ -122,10 +128,11 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                         src={mainPicture}
                         alt={vehicle.title}
                         fill
-                        className="object-cover [image-rendering:-webkit-optimize-contrast]"
+                        className="object-cover"
                         sizes="(min-width:1024px) 560px, (min-width:640px) 90vw, 100vw"
-                        quality={96}
+                        quality={100}
                         priority
+                        style={{ imageRendering: 'high-quality' as any }}
                       />
                       {/* banda inferior para lectura del auto */}
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
@@ -163,7 +170,8 @@ export default function VehicleDetailClient({ vehicle }: Props) {
 
             {/* Miniaturas */}
             {pictures.length > 1 && (
-              <div className="custom-scrollbar flex gap-2 overflow-x-auto pb-1 pt-1">
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+
                 {pictures.map((pic, idx) => {
                   const isActive = idx === activeIndex;
                   return (
@@ -172,11 +180,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                       type="button"
                       whileHover={{ scale: 1.05 }}
                       onClick={() => setActiveIndex(idx)}
-                      className={`relative flex-shrink-0 h-16 w-24 sm:h-20 sm:w-28 overflow-hidden rounded-lg border bg-black ${
-                        isActive
-                          ? 'border-fuchsia-400 ring-2 ring-fuchsia-500'
-                          : 'border-fuchsia-700/40'
-                      }`}
+                      className={`relative flex-shrink-0 h-16 w-24 sm:h-20 sm:w-28 overflow-hidden rounded-lg border bg-black ${isActive
+                        ? 'border-fuchsia-400 ring-2 ring-fuchsia-500'
+                        : 'border-fuchsia-700/40'
+                        }`}
                       aria-label={`Ver imagen ${idx + 1}`}
                     >
                       <Image
@@ -239,7 +246,12 @@ export default function VehicleDetailClient({ vehicle }: Props) {
 
             {/* CARACTERÍSTICAS */}
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Spec label="Kilometraje" value={km !== null ? `${km.toLocaleString('es-AR')} km` : 'A consultar'} />
+              <Spec
+                label="Kilometraje"
+                value={
+                  km !== null ? `${km.toLocaleString('es-AR')} km` : 'A consultar'
+                }
+              />
               <Spec label="Motor" value={motor ?? '-'} />
               <Spec label="Año" value={vehicle.year ?? '-'} />
               <Spec label="Transmisión" value={caja ?? '-'} />
@@ -254,7 +266,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                   Precio final
                 </p>
                 <p className="mt-1 text-2xl font-bold text-white">
-                  ${vehicle.price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                  $
+                  {vehicle.price.toLocaleString('es-AR', {
+                    maximumFractionDigits: 0,
+                  })}
                 </p>
                 <p className="mt-1 text-[0.7rem] text-slate-500">
                   Confirmar vigencia y condiciones con un asesor.
@@ -273,8 +288,8 @@ export default function VehicleDetailClient({ vehicle }: Props) {
             <div className="mt-auto flex flex-col gap-3 pt-2">
               <motion.a
                 whileTap={{ scale: 0.97 }}
-                href={`https://wa.me/5492494XXXXXX?text=Hola! Estoy interesado en el ${encodeURIComponent(
-                  vehicle.title
+                href={`https://wa.me/5492494621182?text=Hola! Estoy interesado en el ${encodeURIComponent(
+                  vehicle.title,
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -282,8 +297,6 @@ export default function VehicleDetailClient({ vehicle }: Props) {
               >
                 💬 Consultar por este vehículo
               </motion.a>
-
-              
 
               <motion.button
                 whileTap={{ scale: 0.97 }}
@@ -300,14 +313,14 @@ export default function VehicleDetailClient({ vehicle }: Props) {
       <AnimatePresence>
         {isModalOpen && mainPicture && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsModalOpen(false)}
           >
             <motion.div
-              className="relative max-w-[96vw] max-h-[92vh] rounded-xl overflow-hidden border border-fuchsia-500/50 bg-[#050712]"
+              className="relative h-full w-full rounded-none overflow-hidden bg-[#050712] md:h-auto md:max-h-[92vh] md:max-w-[96vw] md:rounded-xl border border-fuchsia-500/40"
               initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.97, opacity: 0 }}
@@ -316,70 +329,86 @@ export default function VehicleDetailClient({ vehicle }: Props) {
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
-              <div className="relative w-[92vw] max-w-5xl aspect-[16/9] md:w-[80vw]">
-                <Image
-                  key={activeIndex}
-                  src={pictures[activeIndex]}
-                  alt={`${vehicle.title} grande`}
-                  fill
-                  className="object-contain [image-rendering:-webkit-optimize-contrast]"
-                  sizes="100vw"
-                  quality={98}
-                  priority
-                />
+              {/* Barra superior */}
+              <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-2">
+                <span className="rounded-full bg-black/70 px-2.5 py-1 text-[0.7rem] text-slate-200">
+                  {activeIndex + 1} / {pictures.length}
+                </span>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-slate-100 hover:bg-black"
+                  aria-label="Cerrar"
+                >
+                  ✕ Cerrar
+                </button>
               </div>
 
-              {pictures.length > 1 && (
-                <>
-                  {/* Zonas click izquierda / derecha */}
-                  <button
-                    aria-label="Anterior"
-                    onClick={goPrev}
-                    className="absolute left-0 top-0 h-full w-[18%] md:w-[14%] cursor-w-resize bg-gradient-to-r from-black/10 to-transparent"
-                  />
-                  <button
-                    aria-label="Siguiente"
-                    onClick={goNext}
-                    className="absolute right-0 top-0 h-full w-[18%] md:w-[14%] cursor-e-resize bg-gradient-to-l from-black/10 to-transparent"
+              {/* CONTENIDO: foto grande + miniaturas afuera abajo */}
+              <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-3 md:p-4">
+                {/* Foto grande */}
+                <div className="relative w-full max-w-[1200px] h-[70vh] mx-auto md:h-[70vh]">
+                  <Image
+                    key={activeIndex}
+                    src={pictures[activeIndex]}
+                    alt={`${vehicle.title} grande`}
+                    fill
+                    className="object-contain"
+                    sizes="100vw"
+                    quality={100}
+                    priority
+                    style={{ imageRendering: 'high-quality' as any }}
                   />
 
-                  {/* Barra superior */}
-                  <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-2">
-                    <span className="pointer-events-auto rounded-full bg-black/70 px-2.5 py-1 text-[0.7rem] text-slate-200">
-                      {activeIndex + 1} / {pictures.length}
-                    </span>
-                    <button
-                      onClick={() => setIsModalOpen(false)}
-                      className="pointer-events-auto rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-slate-100 hover:bg-black"
-                      aria-label="Cerrar"
-                    >
-                      ✕ Cerrar
-                    </button>
-                  </div>
+                  {/* Zonas click izquierda / derecha solo sobre la foto */}
+                  {pictures.length > 1 && (
+                    <>
+                      <button
+                        aria-label="Anterior"
+                        onClick={goPrev}
+                        className="absolute left-0 top-0 h-full w-[18%] md:w-[14%] cursor-w-resize bg-gradient-to-r from-black/10 to-transparent"
+                      />
+                      <button
+                        aria-label="Siguiente"
+                        onClick={goNext}
+                        className="absolute right-0 top-0 h-full w-[18%] md:w-[14%] cursor-e-resize bg-gradient-to-l from-black/10 to-transparent"
+                      />
+                    </>
+                  )}
+                </div>
 
-                  {/* Tira de miniaturas abajo */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                    <div className="mx-auto flex max-w-5xl gap-2 overflow-x-auto">
+                {/* Miniaturas ABAJO, por fuera de la foto */}
+                {pictures.length > 1 && (
+                  <div className="w-full max-w-[1200px]">
+                    <div className="flex gap-2 overflow-x-auto pb-1">
                       {pictures.map((p, i) => (
                         <button
                           key={i}
                           onClick={() => setActiveIndex(i)}
-                          className={`relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-md border ${
-                            i === activeIndex ? 'border-fuchsia-400 ring-1 ring-fuchsia-500' : 'border-white/20'
-                          }`}
+                          className={`relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-md border ${i === activeIndex
+                            ? 'border-fuchsia-400 ring-1 ring-fuchsia-500'
+                            : 'border-white/20'
+                            }`}
                           aria-label={`Ir a imagen ${i + 1}`}
                         >
-                          <Image src={p} alt={`thumb ${i + 1}`} fill className="object-cover" sizes="80px" />
+                          <Image
+                            src={p}
+                            alt={`thumb ${i + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="80px"
+                          />
                         </button>
                       ))}
                     </div>
                   </div>
-                </>
-              )}
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+
     </main>
   );
 }

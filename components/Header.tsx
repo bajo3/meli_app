@@ -3,20 +3,19 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
 
   // Bloquear scroll del body + emitir evento global
   useEffect(() => {
-    // bloquea scroll
     document.body.style.overflow = isOpen ? 'hidden' : ''
 
-    // dispara evento global para otros componentes (como FilterDock)
     window.dispatchEvent(new CustomEvent('nav:open', { detail: isOpen }))
 
-    // clase auxiliar en html (por si querés hacer animaciones globales)
     document.documentElement.classList.toggle('nav-open', isOpen)
 
     return () => {
@@ -34,9 +33,14 @@ export default function Header() {
     { href: '/contacto', label: 'Contacto' },
   ]
 
+  const isLinkActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    // para que /catalogo/[slug] siga marcando Catálogo
+    return pathname.startsWith(href)
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-fuchsia-800/40 bg-[#05030a] md:bg-[#05030a]/90 md:backdrop-blur-md">
-
       {/* glow superior sutil */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-fuchsia-500/40 to-transparent" />
 
@@ -56,36 +60,39 @@ export default function Header() {
               Jesús Díaz Automotores
             </span>
             <span className="text-xs text-slate-400">
-              Autos seleccionados · Catálogo conectado a Mercado Libre
+             Unidades 0KM · Autos seleccionados 
             </span>
           </div>
         </Link>
 
         {/* NAV LINKS - DESKTOP */}
         <nav className="hidden items-center gap-6 text-sm md:flex">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`relative px-1 text-slate-300 transition-colors hover:text-white ${
-                link.href === '/catalogo'
-                  ? 'font-semibold text-fuchsia-200'
-                  : ''
-              }`}
-            >
-              {/* pill sutil para Catálogo */}
-              {link.href === '/catalogo' && (
-                <span className="pointer-events-none absolute inset-x-0 -bottom-1 h-[2px] rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-400 to-blue-400 opacity-80" />
-              )}
-              {link.label}
-            </Link>
-          ))}
+          {links.map((link) => {
+            const active = isLinkActive(link.href)
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`relative px-1 transition-colors ${
+                  active
+                    ? 'font-semibold text-fuchsia-200'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                {/* pill sutil solo para el link activo */}
+                {active && (
+                  <span className="pointer-events-none absolute inset-x-0 -bottom-1 h-[2px] rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-400 to-blue-400 opacity-80" />
+                )}
+                {link.label}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* CTA DESKTOP */}
         <div className="hidden items-center gap-2 md:flex">
           <a
-            href="https://wa.me/5492494587046"
+            href="https://wa.me/5492494621182"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/60 bg-fuchsia-600/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 shadow-[0_0_20px_rgba(244,114,182,0.35)] transition hover:bg-fuchsia-500/30 hover:border-fuchsia-400"
@@ -95,7 +102,7 @@ export default function Header() {
           </a>
         </div>
 
-        {/* BOTÓN HAMBURGUESA - MOBILE (misma idea) */}
+        {/* BOTÓN HAMBURGUESA - MOBILE */}
         <button
           className="flex flex-col items-end justify-center gap-[5px] md:hidden"
           onClick={() => setIsOpen((prev) => !prev)}
