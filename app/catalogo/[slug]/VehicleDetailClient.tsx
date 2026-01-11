@@ -5,6 +5,7 @@ import type React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
+import FinancingSimulator from '@/components/FinancingSimulator';
 
 type Props = {
   vehicle: any;
@@ -275,6 +276,11 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                   Confirmar vigencia y condiciones con un asesor.
                 </p>
               </div>
+            )}
+
+            {/* FINANCIACIÓN */}
+            {vehicle.price != null && (
+              <FinancingSimulator price={vehicle.price} title={vehicle.title} />
             )}
 
             {/* Notas / descripción si existe */}
