@@ -218,7 +218,6 @@ function BackgroundFX() {
       <div className="absolute right-[10%] top-[30%] h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="absolute left-[8%] bottom-[15%] h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
       {/* Grain sutil */}
-      <div className="absolute inset-0 opacity-[0.08] mix-blend-soft-light" style={{ backgroundImage: "url('/noise.png')" }} />
     </div>
   );
 }

@@ -280,7 +280,12 @@ export default function VehicleDetailClient({ vehicle }: Props) {
 
             {/* FINANCIACIÓN */}
             {vehicle.price != null && (
-              <FinancingSimulator price={vehicle.price} title={vehicle.title} />
+              <FinancingSimulator
+                price={vehicle.price}
+                title={vehicle.title}
+                year={vehicle.year}
+              />
+
             )}
 
             {/* Notas / descripción si existe */}

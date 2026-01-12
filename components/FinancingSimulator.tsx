@@ -12,54 +12,69 @@ type QuoteOption = { plazo: number; cuota: number };
 type Props = {
   price: number;
   title?: string;
+  year?: number | null; // año del vehículo
 };
 
-export default function FinancingSimulator({ price, title }: Props) {
+export default function FinancingSimulator({ price, title, year }: Props) {
   const MIN_DOWN_PCT = 60;
   const [downPct, setDownPct] = useState<number>(MIN_DOWN_PCT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [options, setOptions] = useState<QuoteOption[] | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
 
-  const downAmount = useMemo(() => Math.round((price * downPct) / 100), [price, downPct]);
-  const amountToFinance = useMemo(() => Math.max(0, price - downAmount), [price, downAmount]);
+  const downAmount = useMemo(
+    () => Math.round((price * downPct) / 100),
+    [price, downPct]
+  );
+
+  const amountToFinance = useMemo(
+    () => Math.max(0, price - downAmount),
+    [price, downAmount]
+  );
 
   const invalid = downPct < MIN_DOWN_PCT;
 
   async function simulate() {
     if (invalid) return;
+
     if (amountToFinance <= 0) {
       setOptions([]);
-      setSummary('Con entrega del 100%, no necesitás financiar.');
       setError(null);
       return;
     }
 
     setLoading(true);
     setError(null);
-    setSummary(null);
+    setOptions(null);
 
     try {
-      const res = await fetch('/api/creditcar/quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price, amountToFinance }),
-      });
+      // Regla año mínimo 2013
+      const modelo = Math.max(2013, Math.round(Number(year ?? 2013)));
+      const monto = Math.round(amountToFinance);
 
-      const data = await res.json().catch(() => ({}));
+      const url = new URL('https://api.cotizadorcreditcar.com.ar/2');
+      url.searchParams.set('monto', String(monto));
+      url.searchParams.set('modelo', String(modelo));
 
-      if (!res.ok || !data?.ok) {
-        setOptions(null);
-        setError(data?.error ?? 'No se pudo simular la financiación.');
-        return;
+      const resp = await fetch(url.toString(), { method: 'GET' });
+      if (!resp.ok) {
+        throw new Error(`Creditcar ${resp.status}`);
       }
 
-      setOptions(Array.isArray(data.options) ? data.options : []);
-      setSummary(data.summaryText ?? null);
+      const data = await resp.json();
+
+      const allowed = new Set([6, 12, 18, 24]);
+      const filtered: QuoteOption[] = (Array.isArray(data) ? data : [])
+        .filter((x: any) => allowed.has(Number(x.plazo)))
+        .map((x: any) => ({
+          plazo: Number(x.plazo),
+          cuota: Number(x.cuota),
+        }))
+        .sort((a: any, b: any) => a.plazo - b.plazo);
+
+      setOptions(filtered);
     } catch (e: any) {
-      setOptions(null);
-      setError(e?.message ?? String(e));
+      setError(e?.message ?? 'No se pudo simular la financiación.');
     } finally {
       setLoading(false);
     }
@@ -69,12 +84,16 @@ export default function FinancingSimulator({ price, title }: Props) {
     <div className="mt-4 rounded-xl border border-white/10 bg-black/35 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[0.7rem] text-slate-400 uppercase tracking-[0.2em]">Simular financiación</p>
-          <p className="mt-1 text-sm text-white/90">
-            Entrega mínima <span className="text-white font-semibold">{MIN_DOWN_PCT}%</span> · Financiación máxima{' '}
-            <span className="text-white font-semibold">40%</span>
+          <p className="text-[0.7rem] text-slate-400 uppercase tracking-[0.2em]">
+            Simular financiación
           </p>
-          {title && <p className="mt-1 text-xs text-slate-400 line-clamp-1">{title}</p>}
+          <p className="mt-1 text-sm text-white/90">
+            Entrega mínima <span className="font-semibold text-white">{MIN_DOWN_PCT}%</span> ·
+            Financiación máxima <span className="font-semibold text-white">40%</span>
+          </p>
+          {title && (
+            <p className="mt-1 line-clamp-1 text-xs text-slate-400">{title}</p>
+          )}
         </div>
 
         <motion.button
@@ -89,7 +108,7 @@ export default function FinancingSimulator({ price, title }: Props) {
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-white/10 bg-black/25 p-3">
-          <p className="text-[0.7rem] text-slate-400 uppercase tracking-[0.2em]">Entrega</p>
+          <p className="text-[0.7rem] uppercase tracking-[0.2em] text-slate-400">Entrega</p>
           <p className="mt-1 text-lg font-bold text-white">$ {fmtMoney(downAmount)}</p>
           <div className="mt-2 flex items-center gap-3">
             <input
@@ -102,16 +121,12 @@ export default function FinancingSimulator({ price, title }: Props) {
             />
             <span className="w-12 text-right text-sm text-white">{downPct}%</span>
           </div>
-          <p className="mt-2 text-[11px] text-slate-400">
-            Si bajás de {MIN_DOWN_PCT}% se bloquea la simulación.
-          </p>
         </div>
 
         <div className="rounded-lg border border-white/10 bg-black/25 p-3">
-          <p className="text-[0.7rem] text-slate-400 uppercase tracking-[0.2em]">A financiar</p>
-          <p className="mt-1 text-lg font-bold text-white">$ {fmtMoney(amountToFinance)}</p>
-          <p className="mt-2 text-[11px] text-slate-400">
-            Este es el monto estimado que se envía a Creditcar para calcular las cuotas.
+          <p className="text-[0.7rem] uppercase tracking-[0.2em] text-slate-400">A financiar</p>
+          <p className="mt-1 text-lg font-bold text-white">
+            $ {fmtMoney(amountToFinance)}
           </p>
         </div>
       </div>
@@ -122,15 +137,7 @@ export default function FinancingSimulator({ price, title }: Props) {
         </p>
       )}
 
-      {error && (
-        <p className="mt-3 text-xs text-red-300">
-          {error}
-        </p>
-      )}
-
-      {summary && (
-        <p className="mt-3 text-xs text-slate-300 whitespace-pre-line">{summary}</p>
-      )}
+      {error && <p className="mt-3 text-xs text-red-300">{error}</p>}
 
       {Array.isArray(options) && (
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -140,10 +147,19 @@ export default function FinancingSimulator({ price, title }: Props) {
             </div>
           ) : (
             options.map((o) => (
-              <div key={o.plazo} className="rounded-lg border border-white/10 bg-black/25 p-3">
-                <p className="text-[0.7rem] text-slate-400 uppercase tracking-[0.2em]">{o.plazo} cuotas</p>
-                <p className="mt-1 text-base font-bold text-white">$ {fmtMoney(o.cuota)}</p>
-                <p className="mt-1 text-[11px] text-slate-400">Aprox. (confirmar condiciones)</p>
+              <div
+                key={o.plazo}
+                className="rounded-lg border border-white/10 bg-black/25 p-3"
+              >
+                <p className="text-[0.7rem] uppercase tracking-[0.2em] text-slate-400">
+                  {o.plazo} cuotas
+                </p>
+                <p className="mt-1 text-base font-bold text-white">
+                  $ {fmtMoney(o.cuota)}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Aprox. (confirmar condiciones)
+                </p>
               </div>
             ))
           )}
