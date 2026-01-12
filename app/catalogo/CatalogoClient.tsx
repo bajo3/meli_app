@@ -12,6 +12,7 @@ import SortMenu from '@/components/SortMenu';
 import FilterChips, { QuickFilters } from '@/components/FilterChips';
 import FilterSheet, { AdvancedFilters } from '@/components/FilterSheet';
 import VehicleCard from '@/components/VehicleCard';
+import { formatVehiclePrice } from '@/lib/vehiclePrice';
 
 type Props = { vehicles: Vehicle[] };
 
@@ -221,10 +222,7 @@ export default function CatalogoClient({ vehicles }: Props) {
           >
             {filtered.map((v) => {
               const cover = v.pictures?.[0] || '/placeholder-car.jpg';
-              const priceFmt =
-                v.price != null
-                  ? `$${v.price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
-                  : 'Consultar';
+              const priceFmt = formatVehiclePrice(v.price).text;
               const meta = `${v.brand || '—'}${v.year ? ` · ${v.year}` : ''}`;
               const km = (v as any).Km ?? (v as any).km;
               const fuel = (v as any).Combustible ?? (v as any).fuel ?? (v as any).fuel_type;
@@ -260,10 +258,7 @@ export default function CatalogoClient({ vehicles }: Props) {
           <section className="flex flex-col gap-3">
             {filtered.map((v) => {
               const cover = v.pictures?.[0] || '/placeholder-car.jpg';
-              const priceFmt =
-                v.price != null
-                  ? `$${v.price.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
-                  : 'Consultar';
+              const priceFmt = formatVehiclePrice(v.price).text;
               const meta = `${v.brand || '—'}${v.year ? ` · ${v.year}` : ''}`;
               return (
                 <Link

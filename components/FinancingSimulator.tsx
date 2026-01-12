@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { formatVehicleMoney, vehicleCurrencyFromPrice } from '@/lib/vehiclePrice';
 
-function fmtMoney(n: number) {
-  return n.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+function fmtMoney(n: number, currency: 'ARS' | 'USD') {
+  return formatVehicleMoney(n, currency);
 }
 
 type QuoteOption = { plazo: number; cuota: number };
@@ -17,6 +18,7 @@ type Props = {
 
 export default function FinancingSimulator({ price, title, year }: Props) {
   const MIN_DOWN_PCT = 60;
+  const currency = useMemo(() => vehicleCurrencyFromPrice(price), [price]);
   const [downPct, setDownPct] = useState<number>(MIN_DOWN_PCT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +111,7 @@ export default function FinancingSimulator({ price, title, year }: Props) {
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-white/10 bg-black/25 p-3">
           <p className="text-[0.7rem] uppercase tracking-[0.2em] text-slate-400">Entrega</p>
-          <p className="mt-1 text-lg font-bold text-white">$ {fmtMoney(downAmount)}</p>
+          <p className="mt-1 text-lg font-bold text-white">{fmtMoney(downAmount, currency)}</p>
           <div className="mt-2 flex items-center gap-3">
             <input
               type="range"
@@ -126,7 +128,7 @@ export default function FinancingSimulator({ price, title, year }: Props) {
         <div className="rounded-lg border border-white/10 bg-black/25 p-3">
           <p className="text-[0.7rem] uppercase tracking-[0.2em] text-slate-400">A financiar</p>
           <p className="mt-1 text-lg font-bold text-white">
-            $ {fmtMoney(amountToFinance)}
+            {fmtMoney(amountToFinance, currency)}
           </p>
         </div>
       </div>
@@ -155,7 +157,7 @@ export default function FinancingSimulator({ price, title, year }: Props) {
                   {o.plazo} cuotas
                 </p>
                 <p className="mt-1 text-base font-bold text-white">
-                  $ {fmtMoney(o.cuota)}
+                  {fmtMoney(o.cuota, currency)}
                 </p>
                 <p className="mt-1 text-[11px] text-slate-400">
                   Aprox. (confirmar condiciones)

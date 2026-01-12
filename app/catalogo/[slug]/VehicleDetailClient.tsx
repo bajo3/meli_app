@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import FinancingSimulator from '@/components/FinancingSimulator';
+import { formatVehiclePrice } from '@/lib/vehiclePrice';
 
 type Props = {
   vehicle: any;
@@ -267,10 +268,7 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                   Precio final
                 </p>
                 <p className="mt-1 text-2xl font-bold text-white">
-                  $
-                  {vehicle.price.toLocaleString('es-AR', {
-                    maximumFractionDigits: 0,
-                  })}
+                  {formatVehiclePrice(vehicle.price).text}
                 </p>
                 <p className="mt-1 text-[0.7rem] text-slate-500">
                   Confirmar vigencia y condiciones con un asesor.
