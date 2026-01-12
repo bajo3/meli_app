@@ -19,7 +19,14 @@ export async function POST(req: Request) {
 
     const price = asNumber(body.price);
     const amountToFinance = asNumber(body.amountToFinance);
-    const modeloRaw = asNumber(body.modelo);
+    const modeloRaw = asNumber(
+      body.modelo ??
+      body.year ??
+      body.anio ??
+      body.vehicleYear ??
+      body.vehicle?.year ??
+      body.vehicle?.anio
+    );
 
     if (price == null || price <= 0) {
       return NextResponse.json({ ok: false, error: "Precio inválido." }, { status: 400 });
@@ -27,12 +34,8 @@ export async function POST(req: Request) {
     if (amountToFinance == null || amountToFinance < 0) {
       return NextResponse.json({ ok: false, error: "Monto a financiar inválido." }, { status: 400 });
     }
-    if (modeloRaw == null) {
-      return NextResponse.json({ ok: false, error: "Modelo/año inválido." }, { status: 400 });
-    }
-
-    // Regla: si es menor a 2013, para Creditcar mandamos 2013.
-    const modelo = Math.max(2013, Math.round(modeloRaw));
+    // Si no viene modelo/año, por defecto usamos 2013 (mínimo aceptado por Creditcar)
+    const modelo = Math.max(2013, Math.round(modeloRaw ?? 2013));
 
     // Regla comercial: máximo 40% financiado => entrega mínima 60%
     const maxFinance = price * 0.4;
