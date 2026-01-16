@@ -218,8 +218,14 @@ export async function fetchAndStoreVehicles(): Promise<{ count: number }> {
 
   if (allItemIds.length === 0) {
     console.log('No se encontraron items activos en MercadoLibre.')
-    // OJO: si querés que esto también limpie Supabase cuando no hay ninguno,
-    // podemos agregar un borrado total acá. Por ahora, no toca la tabla.
+    // Si no hay items activos en ML, mantenemos Supabase alineado limpiando la tabla.
+    // (Esto evita que el catálogo quede mostrando vehículos viejos cuando en ML no hay activos.)
+    const { error: deleteAllError } = await supabase.from('vehicles').delete().neq('id', '')
+    if (deleteAllError) {
+      console.error('Error limpiando vehicles (0 activos en ML):', deleteAllError)
+    } else {
+      console.log('Supabase vehicles limpiado: 0 activos en ML.')
+    }
     return { count: 0 }
   }
 

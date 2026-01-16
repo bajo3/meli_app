@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Vehicle } from '../catalogo/page';
@@ -17,6 +18,7 @@ import { formatVehiclePrice } from '@/lib/vehiclePrice';
 type Props = { vehicles: Vehicle[] };
 
 export default function CatalogoClient({ vehicles }: Props) {
+  const router = useRouter();
   // ===== estado base
   const [search, setSearch] = useState('');
   const [brand, setBrand] = useState<'all' | string>('all');
@@ -44,6 +46,32 @@ export default function CatalogoClient({ vehicles }: Props) {
     const t = setTimeout(() => setReady(true), 300);
     return () => clearTimeout(t);
   }, []);
+
+  // Keep the catalog fresh while the user is browsing (no manual refresh needed).
+  // This re-renders the Server Component and pulls the latest vehicles from Supabase.
+  useEffect(() => {
+    const refresh = () => {
+      startTransition(() => {
+        router.refresh();
+      });
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    // Also refresh periodically so stock changes in ML appear even if the user stays on the page.
+    const interval = window.setInterval(refresh, 60_000);
+
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.clearInterval(interval);
+    };
+  }, [router, startTransition]);
   const showSkeleton = !ready || isPending;
 
   // marcas únicas

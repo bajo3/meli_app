@@ -132,9 +132,9 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                         fill
                         className="object-cover"
                         sizes="(min-width:1024px) 560px, (min-width:640px) 90vw, 100vw"
-                        quality={100}
+                        // Lower quality improves first-load performance with no visible loss in most cases.
+                        quality={75}
                         priority
-                        style={{ imageRendering: 'high-quality' as any }}
                       />
                       {/* banda inferior para lectura del auto */}
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
@@ -363,9 +363,8 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                     fill
                     className="object-contain"
                     sizes="100vw"
-                    quality={100}
+                    quality={80}
                     priority
-                    style={{ imageRendering: 'high-quality' as any }}
                   />
 
                   {/* Zonas click izquierda / derecha solo sobre la foto */}
