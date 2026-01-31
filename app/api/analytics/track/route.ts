@@ -1,57 +1,73 @@
-import { NextResponse } from 'next/server'
-import crypto from 'crypto'
-import { getSupabaseServer } from '@/lib/supabaseServer'
+import { NextResponse } from "next/server";
+import crypto from "crypto";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 
-export const runtime = 'nodejs'
+export const runtime = "nodejs";
 
 const ALLOWED_EVENTS = new Set([
-  'page_view',
-  'vehicle_view',
-  'whatsapp_click',
-  'call_click',
-  'maps_click',
-  'share_click',
-])
+  "page_view",
+  "vehicle_view",
+  "whatsapp_click",
+  "call_click",
+  "maps_click",
+  "share_click",
+]);
 
 function sha256(input: string) {
-  return crypto.createHash('sha256').update(input).digest('hex')
+  return crypto.createHash("sha256").update(input).digest("hex");
 }
 
 function getClientIp(req: Request) {
-  const xf = req.headers.get('x-forwarded-for')
-  if (xf) return xf.split(',')[0].trim()
-  const real = req.headers.get('x-real-ip')
-  if (real) return real.trim()
-  return null
+  const xf = req.headers.get("x-forwarded-for");
+  if (xf) return xf.split(",")[0].trim();
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
+  return null;
 }
 
 async function readJsonBody(req: Request): Promise<any | null> {
   try {
-    const ct = req.headers.get('content-type') || ''
-    // sendBeacon a veces manda text/plain
-    const text = await req.text()
-    if (!text) return null
-    return JSON.parse(text)
+    // sendBeacon a veces manda content-type text/plain; igual lo leemos como texto
+    const text = await req.text();
+    if (!text) return null;
+    return JSON.parse(text);
   } catch {
-    return null
+    return null;
   }
+}
+
+function safeMeta(meta: any) {
+  // meta en DB es jsonb NOT NULL con default {}
+  // Aseguramos que siempre sea un objeto.
+  if (!meta) return {};
+  if (typeof meta === "object") return meta;
+  return { value: String(meta) };
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await readJsonBody(req)
-    if (!body) return NextResponse.json({ ok: false, error: 'empty_body' }, { status: 400 })
+    // Debug útil: confirma que la key server-only está cargada
+    // (no imprime la key, solo la longitud)
+    console.log(
+      "[analytics/track] SERVICE_ROLE length:",
+      process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0
+    );
 
-    const event_type = String(body.event_type || '')
-    if (!ALLOWED_EVENTS.has(event_type)) {
-      return NextResponse.json({ ok: false, error: 'invalid_event_type' }, { status: 400 })
+    const body = await readJsonBody(req);
+    if (!body) {
+      return NextResponse.json({ ok: false, error: "empty_body" }, { status: 400 });
     }
 
-    const salt = process.env.ANALYTICS_SALT || 'dev_salt_change_me'
-    const ip = getClientIp(req)
-    const ip_hash = ip ? sha256(`${salt}:${ip}`) : null
+    const event_type = String(body.event_type || "");
+    if (!ALLOWED_EVENTS.has(event_type)) {
+      return NextResponse.json({ ok: false, error: "invalid_event_type" }, { status: 400 });
+    }
 
-    const user_agent = req.headers.get('user-agent') || null
+    const salt = process.env.ANALYTICS_SALT || "dev_salt_change_me";
+    const ip = getClientIp(req);
+    const ip_hash = ip ? sha256(`${salt}:${ip}`) : null;
+
+    const user_agent = req.headers.get("user-agent") || null;
 
     const row = {
       event_type,
@@ -67,18 +83,31 @@ export async function POST(req: Request) {
       utm_campaign: body.utm_campaign ?? null,
       user_agent,
       ip_hash,
-      meta: body.meta ?? {},
-    }
+      meta: safeMeta(body.meta),
+    };
 
-    const supabase = getSupabaseServer()
-    const { error } = await supabase.from('analytics_events').insert(row)
+    // Aseguramos que jamás se inserte id (por si llegara desde body por error)
+    delete (row as any).id;
+
+    const supabase = getSupabaseServer();
+
+    const { error } = await supabase.from("analytics_events").insert(row);
 
     if (error) {
-      return NextResponse.json({ ok: false, error: 'db_insert_failed' }, { status: 500 })
+      console.error("[analytics/track] insert error:", error);
+      // IMPORTANT: devolvemos el mensaje real para que puedas resolverlo al toque
+      return NextResponse.json(
+        { ok: false, error: "db_insert_failed", detail: error.message },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ ok: false, error: 'unknown' }, { status: 500 })
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    console.error("[analytics/track] unknown error:", err);
+    return NextResponse.json(
+      { ok: false, error: "unknown", detail: String(err?.message ?? err) },
+      { status: 500 }
+    );
   }
 }
