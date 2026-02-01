@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 import { CONTACT, MAPS, waLink } from '@/lib/siteConfig'
 import TrackLink from '@/components/TrackLink'
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export const metadata: Metadata = {
   title: 'Contacto - Jesús Díaz Automotores',
 }

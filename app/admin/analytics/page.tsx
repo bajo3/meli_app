@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { getSupabaseServer } from '@/lib/supabaseServer'
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+
 type SearchParams = Record<string, string | string[] | undefined>
 
 function daysAgo(n: number) {
