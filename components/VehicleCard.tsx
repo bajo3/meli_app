@@ -1,7 +1,7 @@
 // components/VehicleCard.tsx
 'use client';
 
-import Image from 'next/image';
+import SmartImage from '@/components/SmartImage';
 
 type Props = {
   title: string;
@@ -24,7 +24,15 @@ export default function VehicleCard({ title, href, cover, price, meta, badges = 
   return (
     <a href={href} className="group relative flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#111118] shadow-md shadow-black/40 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative h-52 w-full overflow-hidden bg-[#05030a]">
-        <Image src={cover} alt={title} width={600} height={400} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        <SmartImage
+          src={cover}
+          alt={title}
+          variant="card"
+          width={600}
+          height={400}
+          sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
         {/* overlay de puntitos */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(transparent_1px,rgba(255,255,255,0.04)_1px)] bg-[size:6px_6px]" />
         {/* ribbon */}

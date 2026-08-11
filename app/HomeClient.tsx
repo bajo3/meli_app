@@ -133,6 +133,7 @@ export default function Home() {
                   src="/agencia.jpg"
                   alt="Frente de Jesús Díaz Automotores"
                   fill
+                  sizes="(min-width:1024px) 40vw, 100vw"
                   className="object-cover"
                   priority
                 />

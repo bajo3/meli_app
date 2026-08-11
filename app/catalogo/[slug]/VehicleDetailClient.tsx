@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
-import Image from 'next/image';
+import SmartImage from '@/components/SmartImage';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import FinancingSimulator from '@/components/FinancingSimulator';
@@ -167,9 +167,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                       onClick={() => setIsModalOpen(true)}
                       aria-label="Ampliar imagen"
                     >
-                      <Image
+                      <SmartImage
                         src={mainPicture}
                         alt={vehicle.title}
+                        variant="card"
                         fill
                         className="object-cover"
                         sizes="(min-width:1024px) 560px, (min-width:640px) 90vw, 100vw"
@@ -229,9 +230,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                         }`}
                       aria-label={`Ver imagen ${idx + 1}`}
                     >
-                      <Image
+                      <SmartImage
                         src={pic}
                         alt={`${vehicle.title} ${idx + 1}`}
+                        variant="thumb"
                         fill
                         className="object-cover"
                         sizes="120px"
@@ -412,15 +414,15 @@ export default function VehicleDetailClient({ vehicle }: Props) {
               <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-3 md:p-4">
                 {/* Foto grande */}
                 <div className="relative w-full max-w-[1200px] h-[70vh] mx-auto md:h-[70vh]">
-                  <Image
+                  <SmartImage
                     key={activeIndex}
                     src={pictures[activeIndex]}
                     alt={`${vehicle.title} grande`}
+                    variant="full"
                     fill
                     className="object-contain"
                     sizes="100vw"
                     quality={80}
-                    priority
                   />
 
                   {/* Zonas click izquierda / derecha solo sobre la foto */}
@@ -454,9 +456,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                             }`}
                           aria-label={`Ir a imagen ${i + 1}`}
                         >
-                          <Image
+                          <SmartImage
                             src={p}
                             alt={`thumb ${i + 1}`}
+                            variant="thumb"
                             fill
                             className="object-cover"
                             sizes="80px"

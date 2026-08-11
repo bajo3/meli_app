@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import SmartImage from '@/components/SmartImage';
 import Link from 'next/link';
 import type { Vehicle } from '../catalogo/page';
 import FilterDock from '@/components/FilterDock';
@@ -295,7 +295,14 @@ export default function CatalogoClient({ vehicles }: Props) {
                   className="flex gap-3 rounded-xl border border-white/10 bg-[#111118] p-3 hover:bg-white/[0.02]"
                 >
                   <div className="relative h-24 w-32 overflow-hidden rounded-lg">
-                    <Image src={cover} alt={v.title} fill className="object-cover" />
+                    <SmartImage
+                      src={cover}
+                      alt={v.title}
+                      variant="thumb"
+                      fill
+                      sizes="128px"
+                      className="object-cover"
+                    />
                   </div>
                   <div className="flex flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">

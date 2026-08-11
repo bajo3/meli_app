@@ -1,7 +1,7 @@
 // components/TiltCard.tsx
 "use client"
 import { motion, useMotionValue, useTransform } from "framer-motion"
-import Image from "next/image"
+import SmartImage from "@/components/SmartImage"
 import React from "react"
 
 export default function TiltCard({
@@ -31,7 +31,14 @@ export default function TiltCard({
            }}/>
       {/* Cover */}
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
-        <Image src={cover} alt={title} fill className="object-cover" />
+        <SmartImage
+          src={cover}
+          alt={title}
+          variant="card"
+          fill
+          sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+          className="object-cover"
+        />
       </div>
 
       <div className="mt-3 flex items-center justify-between">
@@ -44,7 +51,7 @@ export default function TiltCard({
         <div className="pointer-events-none absolute -bottom-6 left-3 right-3 hidden translate-y-2 gap-2 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 sm:flex">
           {previews.slice(0,3).map((src, i)=>(
             <div key={i} className="relative h-14 flex-1 overflow-hidden rounded-lg border border-white/10">
-              <Image src={src} alt="" fill className="object-cover" />
+              <SmartImage src={src} alt="" variant="thumb" fill sizes="120px" className="object-cover" />
             </div>
           ))}
         </div>
