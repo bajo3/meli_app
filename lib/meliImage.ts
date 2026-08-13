@@ -15,21 +15,33 @@
 /**
  * Sufijos de tamanio que expone mlstatic para cada picture.
  *
- * Se usa `-V` (~500px) tanto en thumb como en card: es el tamanio seguro que ML
- * genera siempre para toda foto publicada. Si queres bajar bandwidth en las
- * miniaturas podes probar `-I` (~160px), pero verifica antes que no se vean
- * borrosas en pantallas retina (un thumb de 120px CSS necesita ~240px reales).
+ * IMPORTANTE: la mayoria de los sufijos (-V, -W, -L, -B, -C...) devuelven un
+ * CUADRADO con bandas blancas arriba y abajo (ej: -V = 320x320 conteniendo una
+ * foto de 320x180). Con `object-cover` eso recorta bandas y ademas desperdicia
+ * pixeles. Solo -A / -O / -F respetan el aspect ratio original de la foto:
+ *
+ *   -A -> ~228px de ancho
+ *   -O -> ~500px de ancho   (con prefijo 2X_ -> ~1000px)
+ *   -F -> ~1200px de ancho  (el que usa la galeria de ML)
+ *
  * Cambiar esto NO afecta la cuota: al ir con `unoptimized`, ninguna de estas
  * variantes consume transformaciones de Vercel.
  */
 const MELI_SUFFIX = {
-  /** ~500px - miniaturas del strip / lightbox */
-  thumb: '-V',
-  /** ~500px - cards de catalogo y grillas */
-  card: '-V',
-  /** original - foto principal y lightbox a pantalla completa */
-  full: '-O',
+  /** ~228px - miniaturas del strip / lightbox (cajas de 80-128px CSS) */
+  thumb: '-A',
+  /** ~1000px (2X_-O) - cards de catalogo y grillas, nitidas en retina */
+  card: '-O',
+  /** ~1200px - foto principal y lightbox a pantalla completa */
+  full: '-F',
 } as const;
+
+/** Variantes que se piden con el prefijo `2X_` para duplicar la resolucion. */
+const MELI_SCALE_2X: Record<MeliVariant, boolean> = {
+  thumb: false,
+  card: true,
+  full: false,
+};
 
 export type MeliVariant = keyof typeof MELI_SUFFIX;
 
@@ -39,24 +51,51 @@ export function isMeliImage(src: unknown): src is string {
 }
 
 /**
- * Reescribe una URL de mlstatic al sufijo de tamanio pedido.
- * Si no es una URL de ML, la devuelve intacta.
+ * Aplica o quita el prefijo `2X_` del nombre del archivo.
  *
- *   meliImage('https://http2.mlstatic.com/D_123-MLA456_012025-O.jpg', 'thumb')
- *   -> 'https://http2.mlstatic.com/D_123-MLA456_012025-I.jpg'
+ * El filename siempre arranca con `D_`, seguido de flags opcionales de dos
+ * letras (`NQ_`, `NP_`), y despues el id de la foto:
+ *
+ *   /D_623008-MLA115012360859_072026-O.jpg
+ *   /D_NQ_NP_2X_623008-MLA115012360859_072026-O.jpg
+ */
+function withScale2X(src: string, enabled: boolean): string {
+  // Primero normalizamos: sacamos el 2X_ que ya pudiera venir.
+  const base = src.replace(/(\/D_(?:[A-Z]{2}_)*)2X_/i, '$1');
+  if (!enabled) return base;
+  return base.replace(/(\/D_(?:[A-Z]{2}_)*)/i, '$12X_');
+}
+
+/**
+ * Reescribe una URL de mlstatic al sufijo de tamanio pedido y fuerza `.webp`.
+ *
+ * mlstatic genera el webp on-demand para cualquier foto (aunque el original sea
+ * jpg), y pesa ~3x menos a igual resolucion: -F.jpg ~163KB vs -F.webp ~52KB.
+ * Eso es lo que permite subir de 320px a 1200px sin empeorar la carga.
+ *
+ *   meliImage('https://http2.mlstatic.com/D_123-MLA456_012025-O.jpg', 'full')
+ *   -> 'https://http2.mlstatic.com/D_123-MLA456_012025-F.webp'
  */
 export function meliImage(src: string | null | undefined, variant: MeliVariant = 'full'): string {
   if (!src) return '';
   if (!isMeliImage(src)) return src;
 
   const suffix = MELI_SUFFIX[variant];
+  const scaled = withScale2X(src, MELI_SCALE_2X[variant]);
 
-  // Reemplaza el sufijo de 1 letra antes de la extension: ...-O.jpg -> ...-I.jpg
-  const rewritten = src.replace(/-[A-Z]\.(jpg|jpeg|png|webp)(\?.*)?$/i, (_m, ext, qs) => {
-    return `${suffix}.${String(ext).toLowerCase()}${qs ?? ''}`;
-  });
+  // Caso normal: ya trae un sufijo de 1 letra antes de la extension.
+  //   ...-O.jpg -> ...-F.webp
+  const replaced = scaled.replace(
+    /-[A-Z]\.(?:jpg|jpeg|png|webp)(\?.*)?$/i,
+    (_m, qs) => `${suffix}.webp${qs ?? ''}`,
+  );
+  if (replaced !== scaled) return replaced;
 
-  return rewritten;
+  // Fallback: la URL no traia sufijo -> lo insertamos antes de la extension.
+  return scaled.replace(
+    /\.(?:jpg|jpeg|png|webp)(\?.*)?$/i,
+    (_m, qs) => `${suffix}.webp${qs ?? ''}`,
+  );
 }
 
 /** Version en lote. */

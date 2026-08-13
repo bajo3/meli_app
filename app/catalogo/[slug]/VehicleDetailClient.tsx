@@ -170,12 +170,10 @@ export default function VehicleDetailClient({ vehicle }: Props) {
                       <SmartImage
                         src={mainPicture}
                         alt={vehicle.title}
-                        variant="card"
+                        variant="full"
                         fill
                         className="object-cover"
                         sizes="(min-width:1024px) 560px, (min-width:640px) 90vw, 100vw"
-                        // Lower quality improves first-load performance with no visible loss in most cases.
-                        quality={75}
                         priority
                       />
                       {/* banda inferior para lectura del auto */}
